@@ -1,0 +1,63 @@
+import { getMusicUrl } from '~/utils/musicUrl'
+import { isBilibiliSong } from '~/utils/bilibiliSource'
+import { useAudioPlayer, type PlayableSong } from './useAudioPlayer'
+import { useToast } from './useToast'
+import type { Song } from '~/types'
+
+export const useSongPlayer = () => {
+  const audioPlayer = useAudioPlayer()
+  const { showToast } = useToast()
+
+  const playSong = async (song: Song | PlayableSong) => {
+    // 如果是当前选中的歌曲
+    if (audioPlayer.isCurrentSong(song.id)) {
+      // 如果正在播放，则暂停
+      if (audioPlayer.getPlayingStatus().value) {
+        audioPlayer.pauseSong()
+        return
+      }
+      
+      // 如果是当前歌曲但暂停了，则恢复播放
+      const currentGlobalSong = audioPlayer.getCurrentSong().value
+      if (currentGlobalSong && (currentGlobalSong.musicUrl || isBilibiliSong(currentGlobalSong))) {
+        audioPlayer.playSong(currentGlobalSong)
+        return
+      }
+    }
+
+    try {
+      let url = null
+
+      // 如果有手动填入的 playUrl，优先使用它（统一处理所有平台）
+      if (song.playUrl && song.playUrl.trim()) {
+        url = song.playUrl.trim()
+      } else if (!isBilibiliSong(song)) {
+        // 如果不是哔哩哔哩歌曲且没有手动 playUrl，通过 API 获取 URL
+        url = await getMusicUrl(song.musicPlatform, song.musicId, song.playUrl)
+      }
+      // 如果是哔哩哔哩歌曲且没有手动 playUrl，url 保持为 null，播放器会处理
+
+      const playableSong: PlayableSong = {
+        ...song,
+        musicUrl: url
+      }
+
+      audioPlayer.playSong(playableSong, [playableSong])
+    } catch (error: any) {
+      console.error('播放失败:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      showToast('播放失败: ' + errorMessage, 'error')
+      
+      // 即使获取 URL 失败，也应该调用 playSong 以触发播放器的错误处理和弹窗逻辑
+      const playableSong: PlayableSong = {
+        ...song,
+        musicUrl: null
+      }
+      audioPlayer.playSong(playableSong, [playableSong])
+    }
+  }
+
+  return {
+    playSong
+  }
+}

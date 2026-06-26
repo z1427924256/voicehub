@@ -51,3 +51,4 @@ server.log
 # 部署包
 tasks/
 historical_context.txt
+.github/workflows/

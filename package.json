@@ -78,7 +78,7 @@
     "lodash-es": "^4.18.1",
     "lucide-react": "^0.577.0",
     "lucide-vue-next": "^0.577.0",
-    "miaoda-react-devkit": "0.1.1-beta.14",
+    "miaoda-react-devkit": "0.1.1-beta.15",
     "multer": "^2.2.0",
     "nodemailer": "^8.0.11",
     "nuxt": "^4.5.1",
